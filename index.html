@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Book List CSV Viewer</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f6f8fa; color: #111; }
+    header { background: #24292f; color: white; padding: 12px 16px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px auto; max-width: 900px; background: white; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #0366d6; color: white; position: sticky; top: 0; }
+    #status { text-align: center; margin-top: 12px; font-size: 14px; color: #666; }
+  </style>
+</head>
+<body>
+  <header><h2>📚 Book List</h2></header>
+  <div id="status">Loading CSV data...</div>
+  <table id="csvTable"></table>
+
+  <script>
+    async function loadCSV() {
+      try {
+        const response = await fetch('books-prices.csv');
+        if (!response.ok) throw new Error('Failed to load CSV');
+        const text = await response.text();
+        const rows = text.trim().split(/\r?\\n/).map(line => line.split(','));
+        const table = document.getElementById('csvTable');
+        table.innerHTML = '';
+
+        const headerRow = document.createElement('tr');
+        rows[0].forEach(h => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          headerRow.appendChild(th);
+        });
+        table.appendChild(headerRow);
+
+        rows.slice(1).forEach(r => {
+          const tr = document.createElement('tr');
+          r.forEach(c => {
+            const td = document.createElement('td');
+            td.textContent = c;
+            tr.appendChild(td);
+          });
+          table.appendChild(tr);
+        });
+
+        document.getElementById('status').textContent = `Loaded ${rows.length - 1} books`;
+      } catch (err) {
+        document.getElementById('status').textContent = 'Error loading CSV: ' + err.message;
+      }
+    }
+    loadCSV();
+  </script>
+</body>
+</html>
