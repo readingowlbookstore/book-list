@@ -1,3 +1,4 @@
-Title,Author,Price_PHP,Genre,Stock,Status,Condition,Format,Special Feature,ISBN
-The Alchemist,Paulo Coelho,380,Fable,20,Preloved,Has light tanning,Paperback,,9780062315007
-Becoming,Michelle Obama,880,Biography,3,Brand New,,Hardbound,Has sprayed edges,9781524763138
+Title,Author,Price_PHP,Genre,Stock,Status,Condition,Format,Special Feature,Synopsis,ISBN
+"The Alchemist","Paulo Coelho",380,"Fable",20,"Preloved","Has light tanning","Paperback","","Until I met John Smith, Number Four, I'd been on the run alone, hiding and fighting to stay alive. Together we are much more powerful. But it could only last so long before we had to separate to find the others. I went to Spain to find Seven, and I found even more, including a 10th member of the Garde who escaped from Lorien alive.","9780062315007"
+"Becoming","Michelle Obama",880,"Biography",3,"Brand New","","Hardbound","Has sprayed edges","","9781524763138"
+

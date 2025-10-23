@@ -5,10 +5,13 @@ async function loadCSV() {
     const response = await fetch('book-list.csv');
     if (!response.ok) throw new Error('Failed to load CSV');
     const text = await response.text();
-    const rows = text.trim().split(/\r?\n/).map(line => line.split(','));
-    allRows = rows;
-    renderTable(rows);
-    document.getElementById('status').textContent = `Loaded ${rows.length - 1} books`;
+
+    // Use PapaParse to handle commas and quotes correctly
+    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+    allRows = [Object.keys(parsed.data[0]), ...parsed.data.map(Object.values)];
+    
+    renderTable(allRows);
+    document.getElementById('status').textContent = `Loaded ${allRows.length - 1} books`;
   } catch (err) {
     document.getElementById('status').textContent = 'Error loading CSV: ' + err.message;
   }
@@ -44,12 +47,10 @@ function renderTable(rows) {
       const td = document.createElement('td');
       const colName = headers[i];
       td.textContent = colName === 'Price_PHP' ? `₱${c}` : c;
-
       if (!mainCols.includes(colName)) td.classList.add('d-none', 'd-md-table-cell');
       tr.appendChild(td);
     });
 
-    // "More" button (mobile only)
     const moreTd = document.createElement('td');
     moreTd.classList.add('d-md-none');
     const btn = document.createElement('span');
@@ -71,11 +72,9 @@ function toggleDetails(rowIndex, rowEl, rowData, headers, btn) {
     return;
   }
 
-  // Remove other open details
   document.querySelectorAll('.details-row').forEach(el => el.remove());
   document.querySelectorAll('.more-btn').forEach(b => (b.textContent = 'More'));
 
-  // Build details section
   const detailsRow = document.createElement('tr');
   detailsRow.classList.add('details-row', 'd-md-none');
   const detailsTd = document.createElement('td');
@@ -91,8 +90,19 @@ function toggleDetails(rowIndex, rowEl, rowData, headers, btn) {
     if (!['Title', 'Author', 'Price_PHP', 'Condition'].includes(h)) {
       const label = document.createElement('strong');
       label.textContent = `${h}:`;
-      const value = document.createElement('span');
-      value.textContent = rowData[i] || '—';
+
+      let value;
+      if (h.toLowerCase() === 'synopsis') {
+        value = document.createElement('div');
+        value.style.whiteSpace = 'pre-wrap';
+        value.style.wordBreak = 'break-word';
+        value.style.marginTop = '4px';
+        value.textContent = rowData[i] || '—';
+      } else {
+        value = document.createElement('span');
+        value.textContent = rowData[i] || '—';
+      }
+
       const container = document.createElement('div');
       container.appendChild(label);
       container.appendChild(value);
