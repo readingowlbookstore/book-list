@@ -18,56 +18,93 @@ function renderTable(rows) {
   const table = document.getElementById('csvTable');
   table.innerHTML = '';
 
-  // Define column visibility per device
-  const visibleColumns = {
-    0: '', // Title (always visible)
-    1: '', // Author (always visible)
-    2: '', // Price_PHP (always visible)
-    3: 'd-none d-md-table-cell', // Genre (hide on mobile)
-    4: 'd-none d-md-table-cell', // Stock (hide on mobile)
-    5: 'd-none d-md-table-cell', // Condition (hide on mobile)
-    6: 'd-none d-md-table-cell'  // ISBN (hide on mobile)
-  };
+  const headers = rows[0];
+  const mainCols = ['Title', 'Author', 'Price_PHP', 'Condition'];
 
   // Header
   const headerRow = document.createElement('tr');
-  rows[0].forEach((h, i) => {
+  headers.forEach(h => {
     const th = document.createElement('th');
     th.textContent = h;
     th.classList.add('bg-primary', 'text-white');
-    if (visibleColumns[i]) th.classList.add(...visibleColumns[i].split(' '));
+    if (!mainCols.includes(h)) th.classList.add('d-none', 'd-md-table-cell');
     headerRow.appendChild(th);
   });
+
+  const thMore = document.createElement('th');
+  thMore.classList.add('d-md-none');
+  headerRow.appendChild(thMore);
   table.appendChild(headerRow);
 
   // Data rows
-  rows.slice(1).forEach(r => {
+  rows.slice(1).forEach((r, rowIndex) => {
     const tr = document.createElement('tr');
+
     r.forEach((c, i) => {
       const td = document.createElement('td');
+      const colName = headers[i];
+      td.textContent = colName === 'Price_PHP' ? `₱${c}` : c;
 
-      // Format specific columns
-      if (rows[0][i] === 'Price_PHP') {
-        td.textContent = `₱${c}`;
-      } else if (rows[0][i] === 'Stock') {
-        const stockIndex = rows[0].indexOf('Stock');
-        const stockValue = Number(r[stockIndex]) || 0;
-        if (stockValue <= 0) {
-          td.innerHTML = '<span class="text-danger fw-semibold">Out of Stock 🔴</span>';
-        } else if (stockValue < 10) {
-          td.innerHTML = '<span class="text-warning fw-semibold">Low Stock 🟡</span>';
-        } else {
-          td.innerHTML = '<span class="text-success fw-semibold">In Stock 🟢</span>';
-        }
-      } else {
-        td.textContent = c;
-      }
-
-      if (visibleColumns[i]) td.classList.add(...visibleColumns[i].split(' '));
+      if (!mainCols.includes(colName)) td.classList.add('d-none', 'd-md-table-cell');
       tr.appendChild(td);
     });
+
+    // "More" button (mobile only)
+    const moreTd = document.createElement('td');
+    moreTd.classList.add('d-md-none');
+    const btn = document.createElement('span');
+    btn.classList.add('more-btn');
+    btn.textContent = 'More';
+    btn.onclick = () => toggleDetails(rowIndex, tr, r, headers, btn);
+    moreTd.appendChild(btn);
+    tr.appendChild(moreTd);
+
     table.appendChild(tr);
   });
+}
+
+function toggleDetails(rowIndex, rowEl, rowData, headers, btn) {
+  const existing = rowEl.nextElementSibling;
+  if (existing && existing.classList.contains('details-row')) {
+    existing.remove();
+    btn.textContent = 'More';
+    return;
+  }
+
+  // Remove other open details
+  document.querySelectorAll('.details-row').forEach(el => el.remove());
+  document.querySelectorAll('.more-btn').forEach(b => (b.textContent = 'More'));
+
+  // Build details section
+  const detailsRow = document.createElement('tr');
+  detailsRow.classList.add('details-row', 'd-md-none');
+  const detailsTd = document.createElement('td');
+  detailsTd.colSpan = headers.length + 1;
+
+  const detailsCard = document.createElement('div');
+  detailsCard.classList.add('details-card');
+
+  const grid = document.createElement('div');
+  grid.classList.add('details-grid');
+
+  headers.forEach((h, i) => {
+    if (!['Title', 'Author', 'Price_PHP', 'Condition'].includes(h)) {
+      const label = document.createElement('strong');
+      label.textContent = `${h}:`;
+      const value = document.createElement('span');
+      value.textContent = rowData[i] || '—';
+      const container = document.createElement('div');
+      container.appendChild(label);
+      container.appendChild(value);
+      grid.appendChild(container);
+    }
+  });
+
+  detailsCard.appendChild(grid);
+  detailsTd.appendChild(detailsCard);
+  detailsRow.appendChild(detailsTd);
+  rowEl.insertAdjacentElement('afterend', detailsRow);
+  btn.textContent = 'Hide';
 }
 
 document.getElementById('searchInput').addEventListener('input', e => {
