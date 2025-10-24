@@ -1,3 +1,8 @@
+
+const statusMap = { 'HC': 'Has creases', 'HF': 'Has foxing', };
+const conditionMap = { 'P': 'Preloved', 'N': 'New' };
+const formatMap = { 'PB': 'Paperback', 'HB': 'Hardbound' };
+
 let allRows = [];
 
 async function loadCSV() {
@@ -6,10 +11,10 @@ async function loadCSV() {
     if (!response.ok) throw new Error('Failed to load CSV');
     const text = await response.text();
 
-    // Use PapaParse to handle commas and quotes correctly
+    // Use PapaParse to handle quotes & commas correctly
     const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
     allRows = [Object.keys(parsed.data[0]), ...parsed.data.map(Object.values)];
-    
+
     renderTable(allRows);
     document.getElementById('status').textContent = `Loaded ${allRows.length - 1} books`;
   } catch (err) {
@@ -33,7 +38,6 @@ function renderTable(rows) {
     if (!mainCols.includes(h)) th.classList.add('d-none', 'd-md-table-cell');
     headerRow.appendChild(th);
   });
-
   const thMore = document.createElement('th');
   thMore.classList.add('d-md-none');
   headerRow.appendChild(thMore);
@@ -46,7 +50,20 @@ function renderTable(rows) {
     r.forEach((c, i) => {
       const td = document.createElement('td');
       const colName = headers[i];
-      td.textContent = colName === 'Price_PHP' ? `₱${c}` : c;
+      let value = c; // Declare value
+
+      // Decode codes for table cells
+      if (colName === 'Status') {
+        value = c.split(',').map(s => statusMap[s.trim()] || s.trim()).join(', ');
+      }
+      if (colName === 'Condition') {
+        value = c.split(',').map(s => conditionMap[s.trim()] || s.trim()).join(', ');
+      }
+      if (colName === 'Format') {
+        value = c.split(',').map(s => formatMap[s.trim()] || s.trim()).join(', ');
+      }
+
+      td.textContent = colName === 'Price_PHP' ? `₱${value}` : value;
       if (!mainCols.includes(colName)) td.classList.add('d-none', 'd-md-table-cell');
       tr.appendChild(td);
     });
@@ -91,21 +108,26 @@ function toggleDetails(rowIndex, rowEl, rowData, headers, btn) {
       const label = document.createElement('strong');
       label.textContent = `${h}:`;
 
-      let value;
+      let value = rowData[i] || '—';
+      if (h === 'Status') value = value.split(',').map(s => statusMap[s.trim()] || s.trim()).join(', ');
+      if (h === 'Condition') value = value.split(',').map(s => conditionMap[s.trim()] || s.trim()).join(', ');
+      if (h === 'Format') value = value.split(',').map(s => formatMap[s.trim()] || s.trim()).join(', ');
+
+      let valueEl;
       if (h.toLowerCase() === 'synopsis') {
-        value = document.createElement('div');
-        value.style.whiteSpace = 'pre-wrap';
-        value.style.wordBreak = 'break-word';
-        value.style.marginTop = '4px';
-        value.textContent = rowData[i] || '—';
+        valueEl = document.createElement('div');
+        valueEl.style.whiteSpace = 'pre-wrap';
+        valueEl.style.wordBreak = 'break-word';
+        valueEl.style.marginTop = '4px';
+        valueEl.textContent = value;
       } else {
-        value = document.createElement('span');
-        value.textContent = rowData[i] || '—';
+        valueEl = document.createElement('span');
+        valueEl.textContent = value;
       }
 
       const container = document.createElement('div');
       container.appendChild(label);
-      container.appendChild(value);
+      container.appendChild(valueEl);
       grid.appendChild(container);
     }
   });
